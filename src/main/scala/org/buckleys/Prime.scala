@@ -2,10 +2,8 @@ package org.buckleys
 
 import collection.mutable.ListBuffer
 import math._
-import java.util.BitSet
 
 object Prime {
-    val bitSet:BitSet = BitSet()
 	val primeStore:ListBuffer[Long] = ListBuffer(2, 3)
 	
 	private val testPrimes:ListBuffer[Long] = ListBuffer(2, 3)
