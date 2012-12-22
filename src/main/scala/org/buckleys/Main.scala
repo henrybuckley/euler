@@ -9,7 +9,7 @@ import Factor._
 
 object Main extends App {
 
-  
+  problem37()
   
   def problem37() {
     var count = 0;
