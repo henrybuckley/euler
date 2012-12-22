@@ -11,4 +11,5 @@ object MathUtil {
    
   def square(x: Long): Long = x * x
   
+  def digits(n: Long) = n.toString.map(_.asDigit)
 }

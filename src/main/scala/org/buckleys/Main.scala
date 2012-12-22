@@ -6,11 +6,47 @@ import scala.io._
 import java.util.Arrays
 import MathUtil._
 import Factor._
+import CollUtil._
 
 object Main extends App {
 
-  problem37()
-  
+  def problem39() {
+    val triangles = for {
+      a <- 1 to 500
+      b <- a to 1000
+      c <- b + 1 to 1000
+      p = a + b + c
+      if p <= 1000
+      if a * a + b * b == c * c
+    } yield (p, (a, b, c))
+
+    val result = triangles.
+      groupBy({ case (p, (a, b, c)) => p }).
+      map({ case (p, list) => (p, list.size) }).
+      foldLeft((0, 0))((x: (Int, Int), e: (Int, Int)) =>
+        if (e._2 > x._2) e else x)
+    println(result)
+  }
+
+  def problem38() = {
+    def oneToNine = 1 to 9
+
+    def panDigitalMultOrZero(n: Long): Long = {
+      def iter(dgts: List[Int], n: Long, mult: Int): List[Int] = {
+        val newdgts = dgts ++ digits(n * mult)
+        if (newdgts.size > 9) List(0)
+        else if (removeAllFrom(newdgts, oneToNine).isEmpty)
+          if (newdgts.size == 9) newdgts else iter(newdgts, n, mult + 1)
+        else List(0)
+      }
+      iter(List(), n, 1).mkString.toLong
+    }
+
+    val res = (1 to 500000).toStream.map(panDigitalMultOrZero(_)).foldLeft(0L)((x, y) => if (y > x) y else x)
+    println(res)
+
+  }
+
   def problem37() {
     var count = 0;
     println(Prime.stream().dropWhile(_ <= 10).filter(isTruncatablePrime).take(11).sum)
@@ -26,11 +62,11 @@ object Main extends App {
         else if (!Prime.isPrime(d.init.mkString.toLong)) false
         else right(d.init)
 
-      val digits = n.toString.map(_.asDigit)
-      left(digits) && right(digits)
+      val dgts = digits(n)
+      left(dgts) && right(dgts)
     }
   }
-  
+
   def problem36() = {
     println((1 until 1000000).filter(isPalindromic _).sum)
 
