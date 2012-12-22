@@ -9,27 +9,86 @@ import Factor._
 
 object Main extends App {
 
-  def digits(n: Int): List[Int] = n.toString.map(_.asDigit).toList
+  
+  
+  def problem37() {
+    var count = 0;
+    println(Prime.stream().dropWhile(_ <= 10).filter(isTruncatablePrime).take(11).sum)
 
-  def cancels(a: Int, b: Int): Boolean =
-    digits(a).intersect(digits(b)).exists(common => {
-      val adigit = (digits(a) diff List(common)).head
-      val bdigit = (digits(b) diff List(common)).head
-      reduceFrac((adigit, bdigit)) == reduceFrac((a, b))
-    })
+    def isTruncatablePrime(n: Long): Boolean = {
+      def left(d: Seq[Int]): Boolean =
+        if (d.tail.isEmpty) true
+        else if (!Prime.isPrime(d.tail.mkString.toLong)) false
+        else left(d.tail)
 
-  def reduceFrac(frac: (Int, Int)): (Int, Int) = frac match {
-    case (a, b) => { val g = gcf(a, b); ((a / g).toInt, (b / g).toInt) }
+      def right(d: Seq[Int]): Boolean =
+        if (d.init.isEmpty) true
+        else if (!Prime.isPrime(d.init.mkString.toLong)) false
+        else right(d.init)
+
+      val digits = n.toString.map(_.asDigit)
+      left(digits) && right(digits)
+    }
+  }
+  
+  def problem36() = {
+    println((1 until 1000000).filter(isPalindromic _).sum)
+
+    def isPalindromic(n: Int) = {
+      def isPal(s: String) = s == s.reverse
+      isPal(Integer.toBinaryString(n)) && isPal(n.toString)
+    }
   }
 
-  val ns = for (i <- 1 to 9; j <- 1 to 9) yield i * 10 + j
-  val pairs = for (
-    num <- ns; den <- ns;
-    if (num < den && cancels(num, den))
-  ) yield (num, den)
+  def problem35() = {
+    println(Prime.streamUpTo(1000000).filter(isCircular).length)
 
-  println(reduceFrac(pairs.fold(1, 1)({ case ((a1, b1), (a2, b2)) => (a1 * a2, b1 * b2) })))
+    def isCircular(n: Long): Boolean = {
+      def isCircular0(digits: Seq[Int]): Boolean = {
+        val rotDigits = rotateDigits(digits)
+        val rotNum = rotDigits.mkString.toLong
+        if (rotNum == n) true
+        else if (!Prime.isPrime(rotNum)) false
+        else isCircular0(rotDigits)
+      }
 
+      def rotateDigits(digits: Seq[Int]) = digits.tail :+ digits.head
+
+      isCircular0(n.toString.map(_.asDigit))
+    }
+  }
+  def problem34() {
+    val curiousNums = for {
+      n <- 10L to 2540160L
+      digits = n.toString.map(_.asDigit.toLong)
+      if (digits.map(fact).sum == n)
+    } yield n
+
+    println(curiousNums.sum)
+  }
+
+  def problem33() {
+    def digits(n: Int): List[Int] = n.toString.map(_.asDigit).toList
+
+    def cancels(a: Int, b: Int): Boolean =
+      digits(a).intersect(digits(b)).exists(common => {
+        val adigit = (digits(a) diff List(common)).head
+        val bdigit = (digits(b) diff List(common)).head
+        reduceFrac((adigit, bdigit)) == reduceFrac((a, b))
+      })
+
+    def reduceFrac(frac: (Int, Int)): (Int, Int) = frac match {
+      case (a, b) => { val g = gcf(a, b); ((a / g).toInt, (b / g).toInt) }
+    }
+
+    val ns = for (i <- 1 to 9; j <- 1 to 9) yield i * 10 + j
+    val pairs = for (
+      num <- ns; den <- ns;
+      if (num < den && cancels(num, den))
+    ) yield (num, den)
+
+    println(reduceFrac(pairs.fold(1, 1)({ case ((a1, b1), (a2, b2)) => (a1 * a2, b1 * b2) })))
+  }
   def problem32() = {
     val digits = (1 to 9).toList
 

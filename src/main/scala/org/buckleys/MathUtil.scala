@@ -7,7 +7,8 @@ object MathUtil {
     tail(BigInt(0), BigInt(1))
   }
  
-  
+  def fact(n:Long):Long = if (n == 0) 1 else n * fact(n - 1)
+   
   def square(x: Long): Long = x * x
-
+  
 }
