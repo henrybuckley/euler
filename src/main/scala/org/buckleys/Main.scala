@@ -3,50 +3,54 @@ package org.buckleys
 import math._
 import scala.collection.mutable.ListBuffer
 import scala.io._
-import java.util.Arrays
 import MathUtil._
 import Factor._
 import CollUtil._
+import java.util.Date
 object Main extends App {
 
   def pentagon(n:Long) = n * (3 * n - 1) / 2
-  def isPentagon(n:Long) = isSquare(24 * n  + 1) && (sqrt(1 + 24 * n).toInt + 1) % 6 == 0
+  def isPentagon(n:Long) = (sqrt(1 + 24 * n) + 1) % 6 == 0
   def pendiff(n:Long) = 3 * n + 1
-  def penstream(n:Long):Stream[(Long, Long)] = (n, pentagon(n)) #:: penstream(n + 1)
+  def penstream(n:Long):Stream[(Long, Long)] = (n, pentagon( n)) #:: penstream(n + 1)
   val ps = penstream(1)
   
-  /*
+  println("start")
+    
+  val start = new java.util.Date
   val res = for {(nd, pd) <- ps
-       _ = println(nd, pd)
        n <- 1 to (pd.toInt - 1)/3
-       m = sqrt((6 * n - 1) * (6 * n - 1) + 24 * pd) 
-       if (m.isWhole && (m.toInt + 1) % 6 == 0)
+       m = sqrt( 36 * n * n - 12 * n + 1 + 24 * pd ) 
+       if (m + 1) % 6 == 0
        (pn, pndash) = (pentagon(n), pentagon((m.toInt + 1) / 6))
        if (isPentagon(pn + pndash))
   } yield (pn, pndash)
-  println(res)
-  */
+  println(res.take(1).toList)
+  println("end" + (((new Date).getTime - start.getTime))/1000)
+   
   
+  /*
   for {(ndiff, diff) <- ps
        _ = println(ndiff,diff)
        (nfirst, first) <- ps.takeWhile(e => pendiff(e._1) <= diff)
        (nsecond, second) <- ps.drop(nfirst.toInt).takeWhile(e => (e._2 - first) <= diff)
        if (second - first) == diff && isPentagon(second + first)
   } yield (nfirst, nsecond, first, second, ndiff, diff)
-  
+  */
  
   
-  
+  /*
   (1 to 100).foreach(x => println(x, pentagon(x), isPentagon(pentagon(x))))
-  
+  */
+  /*
   val pairs = for {i <- Stream.from(2)
                    j <- 1 to i - 1} yield (i, j)
   
   val res = pairs.map({case (a, b) => ((a, pentagon(a)), (b, pentagon(b)))}).
-    filter({case ((a, pa), (b, pb)) => isPentagon(pa + pb) && isPentagon(pa - pb)}).foreach(println)
+    filter({case ((a, pa), (b, pb)) => isPentagon(pa + pb) && isPentagon(pa - pb)})
     
-  //res.map({case ((a, pa), (b, pb)) => (a, b, pa, pb, pa + pb, pa - pb, pentagon(a) - pentagon(a - 1)) }).foreach(println)
-                   
+  res.map({case ((a, pa), (b, pb)) => (a, b, pa, pb, pa + pb, pa - pb, pentagon(a) - pentagon(a - 1)) }).foreach(println)
+  */          
  
   
  

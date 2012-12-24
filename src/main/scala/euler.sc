@@ -44,4 +44,6 @@ object euler {
                                                   //| 3), (7,4), (7,5))
   (1L to 100000L).map(x => (x, x * x)).map({case (x, xsq) => scala.math.abs(Math.sqrt(xsq) - x)}).sum
                                                   //> res2: Double = 0.0
+                                                  
+   7.20 % 6                                       //> res3: Double(1.2000000000000002) = 1.2000000000000002
 }
