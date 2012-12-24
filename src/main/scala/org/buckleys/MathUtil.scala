@@ -12,4 +12,14 @@ object MathUtil {
   def square(x: Long): Long = x * x
   
   def digits(n: Long) = n.toString.map(_.asDigit)
+  
+  def intpow(n: Long, e:Int):Long = 
+    if (e < 0) 0L
+    else if (e == 0) 1L
+    else List.fill(e - 1)(n).foldLeft(n)(_ * _)
+    
+  def isSquare(n: Long) = {
+    val d = sqrt(n).toInt
+    n == d * d
+  }
 }

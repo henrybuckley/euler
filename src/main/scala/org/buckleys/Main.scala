@@ -7,8 +7,129 @@ import java.util.Arrays
 import MathUtil._
 import Factor._
 import CollUtil._
-
 object Main extends App {
+
+  def pentagon(n:Long) = n * (3 * n - 1) / 2
+  def isPentagon(n:Long) = isSquare(24 * n  + 1) && (sqrt(1 + 24 * n).toInt + 1) % 6 == 0
+  def pendiff(n:Long) = 3 * n + 1
+  def penstream(n:Long):Stream[(Long, Long)] = (n, pentagon(n)) #:: penstream(n + 1)
+  val ps = penstream(1)
+  
+  /*
+  val res = for {(nd, pd) <- ps
+       _ = println(nd, pd)
+       n <- 1 to (pd.toInt - 1)/3
+       m = sqrt((6 * n - 1) * (6 * n - 1) + 24 * pd) 
+       if (m.isWhole && (m.toInt + 1) % 6 == 0)
+       (pn, pndash) = (pentagon(n), pentagon((m.toInt + 1) / 6))
+       if (isPentagon(pn + pndash))
+  } yield (pn, pndash)
+  println(res)
+  */
+  
+  for {(ndiff, diff) <- ps
+       _ = println(ndiff,diff)
+       (nfirst, first) <- ps.takeWhile(e => pendiff(e._1) <= diff)
+       (nsecond, second) <- ps.drop(nfirst.toInt).takeWhile(e => (e._2 - first) <= diff)
+       if (second - first) == diff && isPentagon(second + first)
+  } yield (nfirst, nsecond, first, second, ndiff, diff)
+  
+ 
+  
+  
+  (1 to 100).foreach(x => println(x, pentagon(x), isPentagon(pentagon(x))))
+  
+  val pairs = for {i <- Stream.from(2)
+                   j <- 1 to i - 1} yield (i, j)
+  
+  val res = pairs.map({case (a, b) => ((a, pentagon(a)), (b, pentagon(b)))}).
+    filter({case ((a, pa), (b, pb)) => isPentagon(pa + pb) && isPentagon(pa - pb)}).foreach(println)
+    
+  //res.map({case ((a, pa), (b, pb)) => (a, b, pa, pb, pa + pb, pa - pb, pentagon(a) - pentagon(a - 1)) }).foreach(println)
+                   
+ 
+  
+ 
+  
+ 
+  def problem43() = {
+    val perms = "0123456789".permutations.filter(_(0) != '0').toStream
+
+    def sub3Int(n: Int, s: String) = {
+      s.substring(n - 1, n + 2).toInt
+    }
+    
+    val filtered = perms.filter(s => {
+      sub3Int(2, s) % 2 == 0 &&
+        sub3Int(3, s) % 3 == 0 &&
+        sub3Int(4, s) % 5 == 0 &&
+        sub3Int(5, s) % 7 == 0 &&
+        sub3Int(6, s) % 11 == 0 &&
+        sub3Int(7, s) % 13 == 0 &&
+        sub3Int(8, s) % 17 == 0
+    })
+
+    print(filtered.toList.map(_.toLong).sum)
+
+  }
+  
+  def problem407_inprogress() = {
+    def M(n: Int): Int = {
+      val iList = (for (i <- (n / 2) to n - 1; if i * i % n == i) yield i)
+      val res = if (iList.isEmpty) 1 else iList.max
+      if (n % 10000 == 0) println(n, res, (res * res) % n)
+      res
+    }
+
+    (1 to 100).foreach(x => println(x, M(x)))
+    val res = Stream.from(2).takeWhile(_ <= 10000000).map(M _).foldLeft(0)(_ + _)
+    println(res)
+  }
+
+  def problem42() = {
+    val source = Source.fromFile("resources/words.txt")
+    val words = source.mkString
+    source.close()
+    val QuotedWord = """"(\w+)"""".r
+    val wordsList = words.split(",").map({ case QuotedWord(w) => w })
+    println(wordsList.filter(w => isTriangular(wordValue(w))).size)
+
+    def wordValue(w: String): Long = w.map(_ - 'A' + 1).sum
+    def isTriangular(n: Long) = isSquare(n * 8 + 1)
+  }
+
+  def problem41() = {
+    val index = Prime.stream().takeWhile(_ <= 7654321).lastIndexWhere(x => (x.toString diff "1234567").isEmpty)
+    println((index, Prime(index + 1)))
+  }
+
+  def problem40() = {
+    def digitCoord(pos: Long) = {
+      def iter(pos: Long, count: Int): (Int, Long) = {
+        val sectionSize = intpow(10, count - 1) * 9 * count
+        if (sectionSize < pos) iter(pos - sectionSize, count + 1)
+        else (count, pos)
+      }
+      iter(pos, 1)
+    }
+
+    println((0 to 6).map(x => {
+      val pos = intpow(10L, x);
+      val (section, remainder) = digitCoord(pos)
+      //println(section, remainder)
+      findDigit(section, remainder)
+    }).foldLeft(1)(_ * _))
+
+    def findDigit(section: Int, n: Long): Int = {
+      if (section == 1) n.toInt
+      else {
+        val nthnum = (n + section - 1) / section
+        val number = intpow(10, section - 1) + nthnum - 1
+        val numberdigits = digits(number)
+        numberdigits((n - 1).toInt % section)
+      }
+    }
+  }
 
   def problem39() {
     val triangles = for {
