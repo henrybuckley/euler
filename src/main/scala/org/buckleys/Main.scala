@@ -1,23 +1,424 @@
 package org.buckleys
 
+import util.control.Breaks._
 import math._
-import scala.collection.mutable.ListBuffer
-import scala.io._
+import collection.mutable.ListBuffer
+import annotation.tailrec
+import io._
 import MathUtil._
 import Factor._
 import CollUtil._
-import java.util.Date
+import java.util.Date 
 object Main extends App {
 
-  def pentagon(n:Long) = n * (3 * n - 1) / 2
-  def isPentagon(n:Long) = (sqrt(1 + 24 * n) + 1) % 6 == 0
-  def pendiff(n:Long) = 3 * n + 1
-  def penstream(n:Long):Stream[(Long, Long)] = (n, pentagon( n)) #:: penstream(n + 1)
-  val ps = penstream(1)
+  def periodicSqrt(n: Long) = {
+	println(n)
+    val cache = collection.mutable.ListBuffer[(Long, Long, Long)]()
+    def iter(n: Long, base: Long, numer: Long, denomsub: Long): Stream[Long] = {
+      if (cache.contains(base, numer, denomsub)) Stream.empty
+      else {
+        cache += ((base, numer, denomsub))
+        val newnumer = n - denomsub * denomsub
+        val newbase = (numer * (sqrt(n) + denomsub) / newnumer).toInt
+        val newdenomsub = newbase * newnumer - denomsub * numer
+        val g = gcf(newnumer, numer)
+        assert(g == numer)
+        
+        base #:: iter(n, newbase, newnumer / g, newdenomsub / g)
+      }
+    }
+
+    val base = sqrt(n).toLong
+    iter(n, base, 1, base)
+  }
+
+  println(periodicSqrt(2).take(10).toList)
+
+  println((2 to 10000).filter(x => !isSquare(x) && periodicSqrt(x).size % 2 == 0).size)
+  def problem63() = {
+    val res = for {
+      power <- (1 to 22).toSet[Int]
+      n <- 1 to 9
+      testnum = BigInt(n).pow(power)
+      if digits(testnum).size == power
+    } yield testnum
+
+    println(res.size)
+  }
+
+  def problem62() = {
+    def cubeStream(): Stream[Long] = {
+      def str(n: Long): Stream[Long] = (n * n * n) #:: str(n + 1)
+      str(0)
+    }
+
+    val cubemap = collection.mutable.Map[Map[Int, Int], List[Long]]().withDefaultValue(List())
+    breakable {
+      for {
+        cube <- cubeStream()
+        sig = digits(cube).sorted.groupBy(x => x).mapValues(_.size)
+        _ = cubemap(sig) = cube :: cubemap(sig)
+        if cubemap(sig).size == 5
+      } { println(cubemap(sig).min); break }
+    }
+  }
+
+  def problem61() = {
+
+    def digits(n: Any) = n.toString.map(_.asDigit)
+
+    def fourdigitnum(f: Long => Long) = Stream.from(1).map(f(_)).dropWhile(x => digits(x).size < 4).takeWhile(x => digits(x).size == 4)
+
+    val octs = fourdigitnum(octagon).toList
+    val hepts = fourdigitnum(heptagon).toList
+    val hexs = fourdigitnum(hexagon).toList
+    val pents = fourdigitnum(pentagon).toList
+    val squares = fourdigitnum(square).toList
+    val triangles = fourdigitnum(triangle).toList
+
+    val groups = List(triangles, squares, pents, hexs, hepts, octs)
+
+    def startsWith(prefix: Long, n: Long) = {
+      val prefixDigits = digits(prefix)
+      digits(n).take(prefixDigits.length) == prefixDigits
+    }
+
+    def extend(paths: List[List[(Long, Int)]]) = {
+      for {
+        path <- paths
+        (v, n) = path.head
+        (g, _gi) <- groups.zipWithIndex
+        gi = _gi + 3
+        gv <- g
+        if v % 100 > 9 && startsWith(v % 100, gv)
+        if path.forall({ case (v, n) => n != gi })
+      } yield (gv, gi) :: path
+    }
+
+    val res = (1 to 5).foldLeft(octs.map(o => List((o, 8))))((x, y) => extend(x))
+    println(res.filter(l => l.head._1 % 100 > 9 && startsWith(l.head._1 % 100, l.last._1)).head.map(_._1).sum)
+  }
+
+  def problem60() = {
+    var cache = collection.mutable.Map[Long, Boolean]()
+
+    def primeCombs(primes: Long*) = {
+      val firststr = primes.head.toString
+      primes.tail.forall(p => {
+        val prod = p * primes.head
+        cache.getOrElse(prod, {
+          cache(prod) = Prime.isPrime((p.toString + firststr).toLong) &&
+            Prime.isPrime((firststr + p.toString).toLong)
+          cache(prod)
+        })
+      })
+    }
+
+    val MAX = 30000
+
+    var solution: Long = Long.MaxValue
+    val pstr = Prime.stream()
+    breakable {
+      for {
+        ceiling <- Stream.from(1).map(pow(2, _))
+        prevceiling = ceiling / 2
+        pstream = pstr.dropWhile(_ <= 2).takeWhile(_ <= ceiling)
+        p1 <- pstream
+        _ = println(p1, solution, ceiling)
+        _ = if (p1 > solution) break
+        p2 <- pstream.dropWhile(_ <= p1).takeWhile(solution - p1 - _ >= 0)
+        if primeCombs(p2, p1)
+        p3 <- pstream.dropWhile(_ <= p2).takeWhile(solution - p1 - p2 - _ >= 0)
+        if primeCombs(p3, p2, p1)
+        p4 <- pstream.dropWhile(_ <= p3).takeWhile(solution - p1 - p2 - p3 - _ >= 0)
+        if primeCombs(p4, p3, p2, p1)
+        p5 <- pstream.dropWhile(x => x <= p4 && x >= prevceiling).takeWhile(solution - p1 - p2 - p3 - p4 - _ >= 0)
+        if primeCombs(p5, p4, p3, p2, p1)
+        sum = p1 + p2 + p3 + p4 + p5
+      } {
+        if (sum < solution) solution = sum
+      }
+
+    }
+    println(solution)
+  }
+
+  /*
+  var result:List[Long] = null
   
-  println("start")
-    
-  val start = new java.util.Date
+  val pstream = Prime.stream().dropWhile(_ <= 2)
+  breakable {
+    for {
+      p1 <- pstream
+      _ = println(p1)
+      p2 <- pstream.takeWhile(_ <= p1)
+      p3 <- pstream.takeWhile(_ <= p2)
+      p4 <- pstream.takeWhile(_ <= p3)
+      p5 <- pstream.takeWhile(_ <= p4)
+      plist = List(p1, p2, p3, p4, p5)
+      //_ = {if (p1 % 100 < 5) println(plist)}
+      if plist.combinations(2).forall(comb => comb.permutations.forall(x => Prime.isPrime(x.mkString.toLong)))
+    } {
+      result = plist; break
+    }
+  }
+  
+  println(result)
+  */
+
+  def problem59() = {
+    def decode(bytes: List[Char], key: List[Char]): List[Char] = {
+      for {
+        i <- (0 until bytes.length).toList
+        keychar = key(i % key.size)
+      } yield (bytes(i) ^ keychar).toChar
+    }
+
+    val bytes = Source.fromFile("resources/cipher1.txt").mkString.split(",").map(_.trim.toInt.toChar).toList
+    val res = for {
+      x <- 'a' to 'z'
+      y <- 'a' to 'z'
+      z <- 'a' to 'z'
+      message = decode(bytes, List(x, y, z)).mkString
+      lmessage = message.toLowerCase()
+      if "the".r.findAllIn(lmessage).length > 6 && "and".r.findAllIn(lmessage).length > 6
+    } yield message
+
+    res.foreach(msg => println(msg.map(_.toInt).sum, msg))
+  }
+
+  def problem58() = {
+    def spirdiag(n: Long) = {
+      if (n <= 1) 1 else {
+        val cycle = (n + 2) / 4
+        val base = 4 * cycle * cycle - 2 * cycle + 1
+        base + ((n + 2) % 4) * cycle * 2
+      }
+    }
+
+    var primeCount: (Int, Int, Int) = (0, 0, 0)
+
+    breakable {
+      val primes = Stream.from(1, 2).foldLeft((0, 0, 0))((cum, n) =>
+        cum match {
+          case (prevn, prevp, prevnp) => {
+            val nprimes = (2 * n - 4 to 2 * n - 1).foldLeft(0)((cum, n) => if (Prime.isPrime(spirdiag(n))) cum + 1 else cum)
+            primeCount = (n, prevp + nprimes, prevnp + 4 - nprimes)
+            if (primeCount._2 != 0 && (primeCount._3 + primeCount._2).toDouble / primeCount._2 > 10.0) break
+            primeCount
+          }
+        })
+    }
+
+    println(primeCount)
+  }
+
+  def problem57() = {
+    def iter(frac: (BigInt, BigInt)): (BigInt, BigInt) = frac match {
+      case (a, b) => (2 * b + a, b + a)
+    }
+
+    println((1 to 1000).scanLeft((BigInt(1), BigInt(1)))((x, y) => iter(x)).count({ case (a, b) => digits(a).size > digits(b).size }))
+  }
+
+  def problem56() = {
+    println((for {
+      a <- BigInt(1) to 99
+      b <- 1 to 99
+      c = a.pow(b)
+    } yield digits(c).sum).max)
+  }
+
+  def problem55() = {
+    def lychrelOp(n: BigInt): BigInt = n + BigInt(digits(n).reverse.mkString)
+
+    def isLychrel(n: BigInt) = {
+      var running: BigInt = n
+      (1 to 50).forall(i => { running = lychrelOp(running); !isPalindrome(running) })
+    }
+
+    println((BigInt(1) to 10000).count(x => isLychrel(x)))
+  }
+
+  def problem54() = {
+    val source = Source.fromFile("resources/poker.txt")
+
+    var count = 0
+    val hands = for {
+      line <- source.getLines
+      List(p1hand, p2hand) = line.split("""\s+""").grouped(5).toList.map(new Hand(_))
+      if (p1hand > p2hand)
+      //_ = {println(p1hand, "\t", p2hand, p1hand > p2hand,p1hand.handRank, p2hand.handRank)}
+    } count += 1
+    println(count)
+  }
+
+  def problem53() = {
+    var sum = 0L
+    for {
+      n <- 10 to 100
+      r <- 1 to 100
+      if ncr(n, r) > 1000000
+    } { sum += 1 }
+    println(sum)
+  }
+
+  def problem52() = {
+    breakable {
+      for {
+        n <- Stream.from(1)
+        nsets = (1 to 6).map(x => digits(x * n).toSet).distinct.size
+        if nsets == 1
+      } { println(n); break }
+    }
+  }
+
+  def problem51() = {
+    val primes = Prime.stream()
+
+    breakable {
+      for {
+        p <- primes.dropWhile(_ < 1000)
+        p3digits = digits(p).groupBy(x => x).filter({ case (num, reps) => num <= 2 && reps.size >= 3 })
+        if !p3digits.isEmpty
+        (repNum, _) <- p3digits
+        combs <- variantNums(p, repNum, 3)
+        if combs.count(p => Prime.isPrime(p)) >= 8
+      } {
+        println(p)
+        break
+      }
+    }
+
+    def variantNums(basePrime: Long, repeatedNum: Int, repetitions: Int) = {
+      val basePrimeDigits = digits(basePrime)
+
+      val combinations = basePrimeDigits.zipWithIndex.filter(_._1 == repeatedNum).map(_._2).combinations(repetitions).toList
+
+      val variants = for {
+        n <- 0 to 9
+        comb <- combinations
+        tempDigits = basePrimeDigits.toBuffer
+        if !(comb.contains(0) && n == 0)
+        _ = { comb.foreach { tempDigits(_) = n } }
+      } yield (comb, tempDigits.mkString.toLong)
+
+      variants.groupBy(_._1).values.map(x => x.map(_._2))
+    }
+  }
+
+  def problem50b = {
+    val ceiling = 1000000L
+    val primes = Prime.stream().takeWhile(_ < ceiling)
+    val primeCumSums = primes.scanLeft(0L)(_ + _)
+    val maxLength = primeCumSums.indexWhere(_ > ceiling) - 1
+
+    var result = 0L
+    breakable {
+      for {
+        i <- maxLength to 1 by -1
+        primeSums = (0 to primes.size - i).toStream.map(x => primeCumSums(i + x) - primeCumSums(x)).takeWhile(_ < ceiling)
+        primeSum <- primeSums
+        if Prime.isPrime(primeSum)
+      } {
+        result = primeSum
+        break
+      }
+    }
+    println(result)
+  }
+
+  def problem50 = {
+    val ceiling = 1000000L
+    val primes = Prime.stream()
+    val primeCumSums = primes.takeWhile(_ < ceiling).scanLeft(0L)(_ + _)
+    var maxSumCount = 0
+    val psc = new TruncatableStream(primeCumSums.zipWithIndex)
+    val maximumPrimeSumsAndCountsForEachStartPrime = for {
+      (startSum, startIndex) <- psc
+      if primeCumSums(startIndex + maxSumCount) - startSum < ceiling || psc.truncate
+      sumsWithCounts = Stream.from(startIndex + maxSumCount).map(endIndex => (primeCumSums(endIndex) - startSum, endIndex - startIndex))
+      primeSumsBelowCeiling = sumsWithCounts.takeWhile({ case (sum, count) => sum < ceiling }).filter({ case (sum, count) => Prime.isPrime(sum) })
+      if !primeSumsBelowCeiling.isEmpty
+      (maxPrimeSum, maxPrimeSumCount) = primeSumsBelowCeiling.maxBy({ case (sum, count) => count })
+      _ = if (maxSumCount < maxPrimeSumCount) maxSumCount = maxPrimeSumCount
+    } yield (maxPrimeSum, maxPrimeSumCount)
+
+    println(maximumPrimeSumsAndCountsForEachStartPrime.maxBy({ case (sum, count) => count }))
+  }
+
+  def problem49() = {
+    val fourdigitprimes = Prime.stream().dropWhile(_ <= 1000).takeWhile(_ < 9999)
+    def ispermutation(n1: Long, n2: Long*) = n2.toSet[Long].map(_.toString).subsetOf(n1.toString.permutations.toSet)
+
+    val res = for {
+      p <- fourdigitprimes
+      p2 <- fourdigitprimes.dropWhile(_ <= p)
+      p3 = 2 * p2 - p
+      if Prime.isPrime(p3) & ispermutation(p, p2, p3)
+    } yield (p, p2, p3)
+
+    println(res.toList)
+
+  }
+
+  def problem48() = {
+    val bigsum = (1 to 1000).map(x => (1 to x).foldLeft(BigInt(1))((sum, y) => sum * x)).foldLeft(BigInt(0))(_ + _)
+    println(bigsum.toString.takeRight(10))
+  }
+
+  def problem47() = {
+    println(for {
+      n <- Stream.from(1)
+      if (0 to 3).forall(x => primeFactors(n + x).groupBy(x => x).values.size == 4)
+    } yield n)
+  }
+
+  def problem46() = {
+    val compositeOdds = Stream.from(4).map(2 * _ + 1).filter(x => !Prime.isPrime(x))
+    val res = for {
+      n <- compositeOdds
+      if Stream.from(1).map(x => 2 * x * x).takeWhile(_ < n - 1).forall(x => !Prime.isPrime(n - x))
+    } yield n
+    println(res.head)
+  }
+
+  def problem45 = {
+    val ts = Stream.from(286).map(x => triangle(x.toLong))
+    val res = for {
+      t <- ts
+      np = npentagon(t)
+      if (np == np.toLong)
+      nh = nhexagon(t)
+      if (nh == nh.toLong)
+    } yield (ntriangle(t).toLong, np.toLong, nh.toLong, t)
+    println(res.head)
+  }
+
+  def problem44() = {
+    //def pendiff(n:Long) = 3 * n + 1
+
+    def pentstream(n: Long): Stream[Long] = pentagon(n) #:: pentstream(n + 1)
+    val pents = pentstream(1)
+
+    def imax(pd: Long): Int = {
+      floor((-5.0 + sqrt(25 + 24 * pd)) / 6).toInt
+    }
+
+    val res = for {
+      pdiff <- pents
+      i <- 1 to imax(pdiff)
+      nlowerfrac = (2.0 * pdiff - i * (3 * i - 1)) / (6 * i)
+      if nlowerfrac % 1 == 0
+      nlower = nlowerfrac.toLong
+      nupper = nlower.toLong + i
+      plower = pentagon(nlower)
+      pupper = pentagon(nupper)
+      if isPentagon(plower + pupper)
+    } yield (nlower, nupper, plower, pupper, i)
+
+    println(res.head)
+    /*
   val res = for {(nd, pd) <- ps
        n <- 1 to (pd.toInt - 1)/3
        m = sqrt( 36 * n * n - 12 * n + 1 + 24 * pd ) 
@@ -27,9 +428,9 @@ object Main extends App {
   } yield (pn, pndash)
   println(res.take(1).toList)
   println("end" + (((new Date).getTime - start.getTime))/1000)
-   
-  
-  /*
+  */
+
+    /*
   for {(ndiff, diff) <- ps
        _ = println(ndiff,diff)
        (nfirst, first) <- ps.takeWhile(e => pendiff(e._1) <= diff)
@@ -37,12 +438,11 @@ object Main extends App {
        if (second - first) == diff && isPentagon(second + first)
   } yield (nfirst, nsecond, first, second, ndiff, diff)
   */
- 
-  
-  /*
+
+    /*
   (1 to 100).foreach(x => println(x, pentagon(x), isPentagon(pentagon(x))))
   */
-  /*
+    /*
   val pairs = for {i <- Stream.from(2)
                    j <- 1 to i - 1} yield (i, j)
   
@@ -50,19 +450,17 @@ object Main extends App {
     filter({case ((a, pa), (b, pb)) => isPentagon(pa + pb) && isPentagon(pa - pb)})
     
   res.map({case ((a, pa), (b, pb)) => (a, b, pa, pb, pa + pb, pa - pb, pentagon(a) - pentagon(a - 1)) }).foreach(println)
-  */          
- 
-  
- 
-  
- 
+  */
+
+  }
+
   def problem43() = {
     val perms = "0123456789".permutations.filter(_(0) != '0').toStream
 
     def sub3Int(n: Int, s: String) = {
       s.substring(n - 1, n + 2).toInt
     }
-    
+
     val filtered = perms.filter(s => {
       sub3Int(2, s) % 2 == 0 &&
         sub3Int(3, s) % 3 == 0 &&
@@ -76,7 +474,7 @@ object Main extends App {
     print(filtered.toList.map(_.toLong).sum)
 
   }
-  
+
   def problem407_inprogress() = {
     def M(n: Int): Int = {
       val iList = (for (i <- (n / 2) to n - 1; if i * i % n == i) yield i)
@@ -637,8 +1035,6 @@ object Main extends App {
   }
 
   def problem12() {
-    def triangle(n: Long): Long = (n * (n + 1)) / 2
-
     def ndivisors(n: Long): Int = {
       val factors = Factor.primeFactors(n)
       factors.groupBy(x => x).map({ case (k, v) => v.size }).foldLeft(1)((x, y) => x * (y + 1))
@@ -760,10 +1156,6 @@ object Main extends App {
   }
 
   def problem4() {
-    def isPalindrome(n: Long): Boolean = {
-      val s = n.toString
-      s.reverse == s
-    }
 
     val palindromes = for (
       i <- Range(100, 999);

@@ -8,12 +8,14 @@ object Prime {
 	var testIndex = 1
 
     def apply(n:Int):Long = {
+	  //println(n)
 	  if (n <= primeStore.length) primeStore(n-1)
 	  else for (i <- primeStore.length to n) nextPrime()  
 	  primeStore(n-1)
 	}
     
 	def isPrime(n:Long):Boolean = 
+	  //if (primeStore.contains(n)) true else
 	  if (n < 2) false 
 	  else {
 		val limit = sqrt(n)
@@ -24,6 +26,7 @@ object Prime {
        var candidatePrime = primeStore.last
        do {
          candidatePrime += 2
+         if (candidatePrime % 3 == 0) candidatePrime += 2
          val limit = sqrt(candidatePrime) 
          while (this(testIndex) < limit) testIndex += 1
        } 
