@@ -5,6 +5,12 @@ object test2 {
   List(1,1,2,3).scan(0)(_ + _)                    //> res0: List[Int] = List(0, 1, 2, 4, 7)
   //(550 to 1 by -1).toList
   
+  //var prod = (1.0, 1.0)
+  
+  //Prime.stream().takeWhile(x => {prod = (prod._2, prod._1 * x); prod._2 <= 1000000}).toList
+  //prod
+  
+  
   digits(1234125).groupBy(x=>x)                   //> res1: scala.collection.immutable.Map[Int,scala.collection.immutable.IndexedS
                                                   //| eq[Int]] = Map(5 -> Vector(5), 1 -> Vector(1, 1), 2 -> Vector(2, 2), 3 -> Ve
                                                   //| ctor(3), 4 -> Vector(4))
@@ -29,10 +35,18 @@ object test2 {
                                                   //> map  : scala.collection.mutable.Map[Int,List[Int]] = Map()
    
    (sqrt(23) + 4) / 7                             //> res9: Double = 1.2565473604732456
+    
+    
+  val list = List("ab", "def", "t")               //> list  : List[java.lang.String] = List(ab, def, t)
+  
+  (Seq("") /: Seq("ab", "def", "t")) { (acc, s) =>
+     s.flatMap(c => acc.map(_ + c))
+  }                                               //> res10: Seq[java.lang.String] = Vector(adt, bdt, aet, bet, aft, bft)
+  
+  val arr = new Array[Int](5)                     //> arr  : Array[Int] = Array(0, 0, 0, 0, 0)
+  arr(1) += 2
+  arr(1)                                          //> res11: Int = 2
    
-   
-   
-  //map(3) ::= 2
   //map(3) = 2 :: map(3)
   //map(3)
  

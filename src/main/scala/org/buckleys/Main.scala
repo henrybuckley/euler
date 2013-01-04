@@ -8,33 +8,253 @@ import io._
 import MathUtil._
 import Factor._
 import CollUtil._
-import java.util.Date 
+import java.util.Date
 object Main extends App {
 
-  def periodicSqrt(n: Long) = {
-	println(n)
-    val cache = collection.mutable.ListBuffer[(Long, Long, Long)]()
-    def iter(n: Long, base: Long, numer: Long, denomsub: Long): Stream[Long] = {
-      if (cache.contains(base, numer, denomsub)) Stream.empty
-      else {
-        cache += ((base, numer, denomsub))
-        val newnumer = n - denomsub * denomsub
-        val newbase = (numer * (sqrt(n) + denomsub) / newnumer).toInt
-        val newdenomsub = newbase * newnumer - denomsub * numer
-        val g = gcf(newnumer, numer)
-        assert(g == numer)
-        
-        base #:: iter(n, newbase, newnumer / g, newdenomsub / g)
-      }
+  
+  
+  def problem76() = {
+    val cache = collection.mutable.Map[(Int, Int), Long]()
+    def countSum(n: Int): Long = {
+      def iter(n: Int, ceil: Int): Long =
+        cache.getOrElse((n, ceil), {
+          cache((n, ceil)) =
+            if (n <= 1) 1
+            else (0L /: (1 to min(n, ceil))) { (acc, i) => acc + iter(n - i, i) }
+          cache((n, ceil))
+        })
+      iter(n, n - 1)
     }
 
-    val base = sqrt(n).toLong
-    iter(n, base, 1, base)
+    println(countSum(100))
   }
 
-  println(periodicSqrt(2).take(10).toList)
+  def problem75b() = {
+    val ceiling = 1500000
+    var result = 0
+    val triangles = new Array[Int](ceiling + 1)
 
-  println((2 to 10000).filter(x => !isSquare(x) && periodicSqrt(x).size % 2 == 0).size)
+    val mmax = ((-1 + sqrt(1 + 2 * ceiling)) / 2).toInt
+    //println(mmax, sqrt(ceiling /2), sqrt(ceiling))
+    for {
+      m <- 2 to mmax
+      nmin = if (m % 2 == 0) 1 else 2
+      nmax = min(m - 1, (ceiling - 2 * m * m) / (2 * m))
+      n <- nmin to nmax by 2
+      if gcf(m, n) == 1
+      pprim = 2 * (m * m + m * n)
+      k <- 1 to ceiling / pprim
+      p = pprim * k
+    } {
+      triangles(p) += 1
+      if (triangles(p) == 1) result += 1;
+      if (triangles(p) == 2) result -= 1;
+    }
+    println(result)
+  }
+
+  def problem75() = {
+    val ceiling = 1500000
+    var rescount = 0
+    for {
+      p <- (2 to ceiling by 2).toStream
+      mmax = ((sqrt(1 + 2 * p) - 1) / 2).toInt
+      //mmin = -3  + sqrt(9 + 2 * p) / 2
+      count = (for {
+        m <- 2 to mmax
+        twomsq = 2 * m * m
+        nmax = (p - twomsq) / (2 * m)
+        //_ = println(m,mmax,nmax, p)
+        n <- 1 to ((p - twomsq) / (2 * m))
+        if m > n //&& gcf(m, n) == 1
+        k = 1.0 * p / (twomsq + 2 * m * n)
+        if isWhole(k)
+        kint = k.toInt
+        a = (m * m - n * n) * kint
+        b = (2 * m * n) * kint
+        //c = (m *m + n * n) * kint
+        //_ = println(a,b,c, p, m, n, kint)
+      } yield if (a < b) (a, b) else (b, a)).distinct.size
+      if count == 1
+    } { rescount += 1; if (rescount % 1000 == 0) println(rescount, p) }
+
+    println(rescount)
+    //   (2 to mmax).map(m => (1.0 * p - 2 * m * m) / (2 * m))
+    //  _ = if (nmax == nmax.toInt) count += 1    
+    //} 
+
+  }
+
+  def problem74() = {
+    def digits(n: Any) = n.toString.map(_.asDigit)
+
+    def digitfact(n: Long): Long = {
+      digits(n).map(fact(_)).sum
+    }
+
+    def countfactchain(n: Long): Int = {
+      def iter(n: Long, prev: List[Long]): Int = {
+        val next = digitfact(n)
+        if (prev.contains(next)) 0
+        else 1 + iter(next, next :: prev)
+      }
+      1 + iter(n, List())
+    }
+
+    var count = 0
+    for {
+      n <- 1 until 1000000
+      if countfactchain(n) == 60
+    } count += 1
+
+    println(count)
+  }
+  def problem73() = {
+    val ceiling = 12000
+    var count = 0
+    for {
+      d <- 2 to ceiling
+      n <- d / 3 + 1 to d / 2
+      if (n * 3 > d && n * 2 < d && gcf(n, d) == 1)
+    } count += 1
+
+    println(count)
+  }
+
+  def problem72() = {
+    val ceiling = 1000000
+    var count = 0L
+    for {
+      d <- (2 to ceiling)
+    } {
+      count += Phi.phi(d)
+    }
+
+    println(count)
+  }
+
+  def problem71 = {
+    val ceiling = 1000000
+    var maxfrac = ~~(0, 1)
+    for {
+      d <- (2 to ceiling).toStream
+      n = 3 * d / 7
+      //_ = {println (n, d)}
+      //if gcf(n, d) == 1
+      frac = ~~(n, d)
+      if (frac > maxfrac && 7 * n < 3 * d)
+      //_ = println(n, d, frac, maxfrac)
+    } maxfrac = frac
+
+    println(maxfrac)
+  }
+
+  def problem70() = {
+    val ceiling = 10000000
+    val rootceiling = sqrt(10000000)
+    var nOverPhiN_min = 100.0
+    val maxPrimeIndex = Stream.from(1).indexWhere(Prime(_) > rootceiling) - 1
+    val res = for {
+      i <- Stream.from(maxPrimeIndex - 1, -1).takeWhile(_ > 0)
+      pi = Prime(i)
+      alpha = nOverPhiN_min * (pi - 1) / pi
+      pjlimit = alpha / (alpha - 1)
+      pj <- Stream.from(i + 1).map(Prime(_))
+        .dropWhile(p => if (pjlimit > 0) p < pjlimit else false)
+        .takeWhile(p => if (pjlimit < 0) p <= pjlimit else true && p * pi < ceiling)
+      n = pi * pj
+      phin = (pi - 1) * (pj - 1)
+      if ispermutation(n, phin)
+      nOverPhiN = 1.0 * n / phin
+      _ = if (nOverPhiN_min > nOverPhiN) { nOverPhiN_min = nOverPhiN }
+    } yield (n, pi, pj, nOverPhiN)
+
+    println(res.minBy(_._4))
+  }
+
+  def problem69b() = {
+    var prod = 1.0
+    breakable {
+      for {
+        p <- Prime.stream()
+        _ = { prod = prod * p }
+        if prod < 1000000 || { prod = prod / p; break; false }
+      } {}
+    }
+    println(prod)
+  }
+
+  def problem69() = {
+    var maxNdivPhi = (0, 0.0)
+    for {
+      n <- 2 to 1000000
+      _ = if (n % 1000 == 0) println(n)
+      nDivPhi = 1.0 * n / Phi.phi(n)
+    } if (maxNdivPhi._2 < nDivPhi) maxNdivPhi = (n, nDivPhi)
+
+    println(maxNdivPhi)
+  }
+
+  def problem68() = {
+    def data(n: Int) = (1 to 2 * n - 1).permutations.map(x => (2 * n +: x.toList).grouped(2).toList)
+
+    val res = for {
+      mapping <- data(5)
+      firstpair = mapping.head
+      lastpair = mapping.last
+      tripletspartial = for (List(first, second) <- mapping.sliding(2))
+        yield List(first(0), first(1), second(1))
+      triplets = List(lastpair(0), lastpair(1), firstpair(1)) :: tripletspartial.toList
+      if triplets.sliding(2).forall({ case List(x, y) => x.sum == y.sum })
+    } yield {
+      val (start, end) = triplets.splitAt(triplets.indexOf(triplets.minBy(_(0))))
+      (end ++ start).flatMap(x => x).mkString.toLong
+    }
+
+    println(res.max)
+  }
+
+  def problem67() = {
+    val tridata = Source.fromFile("resources/triangle.txt").mkString.split("\n").map(_.split(" ").map(_.toInt).toList).toList
+
+    def maxPairs(l: List[Int]): List[Int] = l.sliding(2).map(_.max).toList
+
+    var rowbuf = List.fill(tridata.size)(0)
+    for (row <- tridata.reverse) rowbuf = maxPairs((rowbuf zip row).map(x => x._1 + x._2))
+
+    println(rowbuf.head)
+  }
+
+  def problem66() = {
+    val res = for {
+      d <- (1 to 1000).filter(!isSquare(_))
+      pellSln = sqrtContinuedFrac(d).dropWhile({ case (r, s) => r * r - d * s * s != 1 }).head
+    } yield (d, pellSln)
+
+    res.foreach(println)
+    println(res.maxBy(_._2._1) match { case (n, (r, s)) => (n, r, s, r * r - 661 * s * s) })
+  }
+
+  def problem65() = {
+    def biggcf(v1: BigInt, v2: BigInt): BigInt = {
+      val (smaller, larger) = if (v1 < v2) (v1, v2) else (v2, v1)
+      if (smaller == 0) larger
+      else if (larger % smaller == 0) smaller
+      else biggcf(smaller, larger - smaller)
+    }
+
+    def ecf(): Stream[Long] = {
+      def iter(n: Long): Stream[Long] = 1 #:: (2 * n) #:: 1 #:: iter(n + 1)
+      2 #:: iter(1)
+    }
+
+    println(digits(continuedFrac(100, ecf)._1).sum)
+  }
+
+  def problem64() = {
+    println((2 to 10000).filter(x => !isSquare(x) && sqrtContinuedFracCoeffs(x, true).size % 2 == 0).size)
+  }
+
   def problem63() = {
     val res = for {
       power <- (1 to 22).toSet[Int]
@@ -349,7 +569,6 @@ object Main extends App {
 
   def problem49() = {
     val fourdigitprimes = Prime.stream().dropWhile(_ <= 1000).takeWhile(_ < 9999)
-    def ispermutation(n1: Long, n2: Long*) = n2.toSet[Long].map(_.toString).subsetOf(n1.toString.permutations.toSet)
 
     val res = for {
       p <- fourdigitprimes
