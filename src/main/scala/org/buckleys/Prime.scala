@@ -18,8 +18,7 @@ object Prime {
 	  //if (primeStore.contains(n)) true else
 	  if (n < 2) false 
 	  else {
-		val limit = sqrt(n)
-		!stream().takeWhile(_ <= limit).exists(n % _ == 0)
+		!stream.takeWhile(p=> p * p <= n).exists(n % _ == 0)
 	  }
 	
     private def nextPrime() = {
@@ -27,20 +26,23 @@ object Prime {
        do {
          candidatePrime += 2
          if (candidatePrime % 3 == 0) candidatePrime += 2
-         val limit = sqrt(candidatePrime) 
-         while (this(testIndex) < limit) testIndex += 1
+         var test = this(testIndex)
+         while (test * test < candidatePrime) {
+           testIndex += 1
+           test = this(testIndex)
+         }
        } 
        while (primeStore.view(0,testIndex).exists(candidatePrime % _ == 0))
        primeStore.append(candidatePrime);
        candidatePrime
     }
     
-    def streamUpTo(n:Long):Stream[Long] = stream().takeWhile(_ <= n)
+    def streamUpTo(n:Long):Stream[Long] = stream.takeWhile(_ <= n)
     
-    def stream():Stream[Long] = {
-      def stream0(n:Int):Stream[Long] = Prime(n) #:: stream0(n + 1)
-      stream0(1)
-    }
+    val stream = streamFrom(1)
+    
+    def streamFrom(n:Int):Stream[Long] = Prime(n) #:: streamFrom(n + 1)
+    
   
     /*
   def primes(): Stream[Int] = {

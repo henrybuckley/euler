@@ -1,8 +1,9 @@
 import org.buckleys._
 import MathUtil._
 object euler {
-  println("Welcome to the Scala worksheet")
-  
+  List(3, 4) span (3 !=)                          //> res0: (List[Int], List[Int]) = (List(),List(3, 4))
+  println("Welcome to the Scala worksheet")       //> Welcome to the Scala worksheet
+   
   /*
   Prime.isPrime(9)
    
@@ -32,12 +33,18 @@ object euler {
   "123456".substring(1, 4)
   */
   
-  val s = (1 to 10)
-  s zip s.tail
+  val s = (1 to 10)                               //> s  : scala.collection.immutable.Range.Inclusive = Range(1, 2, 3, 4, 5, 6, 7,
+                                                  //|  8, 9, 10)
+  s zip s.tail                                    //> res1: scala.collection.immutable.IndexedSeq[(Int, Int)] = Vector((1,2), (2,3
+                                                  //| ), (3,4), (4,5), (5,6), (6,7), (7,8), (8,9), (9,10))
 
   (for {i <- Stream.from(2)
        j <- 1 to i - 1} yield (i, j)).take(20).toList
+                                                  //> res2: List[(Int, Int)] = List((2,1), (3,1), (3,2), (4,1), (4,2), (4,3), (5,1
+                                                  //| ), (5,2), (5,3), (5,4), (6,1), (6,2), (6,3), (6,4), (6,5), (7,1), (7,2), (7,
+                                                  //| 3), (7,4), (7,5))
   (1L to 100000L).map(x => (x, x * x)).map({case (x, xsq) => scala.math.abs(Math.sqrt(xsq) - x)}).sum
-                                                  
-   7.20 % 6
+                                                  //> res3: Double = 0.0
+
  //  for (i <- Stream.from(1); if i <= 2; j <- Stream.from(1); if j <= 2) yield (i, j)
+}

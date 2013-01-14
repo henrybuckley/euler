@@ -10,8 +10,8 @@ object MathUtil {
 
   def fact(n: Long): Long = if (n == 0) 1 else n * fact(n - 1)
 
-  def digits(n: Any) = n.toString.map(_.asDigit)
-
+  def digits(n: Any) = n.toString.filter(_.isDigit).map(_.asDigit)
+  
   def intpow(n: Long, e: Int): Long =
     if (e < 0) 0L
     else if (e == 0) 1L
@@ -30,12 +30,37 @@ object MathUtil {
   }
 
   def longsFrom(n: Long): Stream[Long] = n #:: longsFrom(n + 1)
+  def longsFrom(n: Long, step:Long): Stream[Long] = n #:: longsFrom(n + step, step)
 
   def isPalindrome(n: Any): Boolean = {
     val s = n.toString
     s.reverse == s
   }
+  
+  val rootMaxLong = sqrt(Long.MaxValue).toLong
+  
+  def isSquare(n:Long) = {
+    /*
+    def iter(low:Long, high:Long):Boolean = {
+      val mid = (low + high) / 2
+      // avoid long overflow
+      val midsq = if (mid > rootMaxLong) Long.MaxValue else mid * mid
+      //println(n, low, high, mid, midsq)
+      if (low > high) false
+      else if (midsq == n) true
+      else if (midsq > n) iter(low, mid-1)
+      else iter(mid + 1, high)
+    }
+    if (n == Long.MaxValue) throw new ArithmeticException("Can't handle maximum long value")
+    if (n==1 || n == 4) true
+    else iter(1, n/3)
+    */
+    val rt = sqrt(n).toLong
+    rt * rt == n
+  }
 
+  def pentstream(n: Long): Stream[Long] = pentagon(n) #:: pentstream(n + 1)
+  
   def triangle(n: Long) = n * (n + 1) / 2
   def square(n: Long) = n * n
   def pentagon(n: Long) = n * (3 * n - 1) / 2
@@ -50,9 +75,8 @@ object MathUtil {
   def nheptagon(h: Long) = (3 + sqrt(9 + 40 * h)) / 10
   def noctagon(o: Long) = (2 + sqrt(4 + 12 * o)) / 6
 
-  def isPentagon(n: Long) = isWhole(npentagon(n))
-  def isSquare(n: Long) = isWhole(nsquare(n))
-  def isTriangle(n: Long) = isWhole(ntriangle(n))
+  def isPentagon(n: Long) = pentagon(npentagon(n).toLong) == n
+  def isTriangle(n: Long) = triangle(ntriangle(n).toLong) == n
   def isHexagon(n: Long) = isWhole(nhexagon(n))
   def isHeptagon(n: Long) = isWhole(nheptagon(n))
   def isOctagon(n: Long) = isWhole(noctagon(n))

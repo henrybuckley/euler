@@ -5,28 +5,66 @@ import MathUtil._
 import Prime._
 
 object Factor {
-  def divisors(n: Long): Set[Long] =
+  val primes = Prime.stream
+
+  def divisors(n: Long): Set[Long] = {
+    assert(n >= 1)
     if (n == 1) Set(1)
-    else Prime.stream().find(n % _ == 0) match {
+    else primes.find(n % _ == 0) match {
       case Some(factor) => {
         val subdivisors = divisors(n / factor)
         subdivisors ++ subdivisors.map(_ * factor)
       }
     }
+  }
 
   def properDivisors(n: Long): List[Long] =
-    if (n < 2) List() else (divisors(n) - n).toList.sorted
+    (divisors(n) - n).toList.sorted
 
   val factorCache = collection.mutable.Map[Long, List[Long]]()
+
+  def sumdiv(n: Long) = {
+    //properDivisors(n).sum 
+    var sum = 1l
+    var lastsum = 0l
+    var ndiv = n
+    for {
+      p <- primes.takeWhile(p => p * p < n)
+    } {
+      lastsum = sum
+      while (ndiv % p == 0) {
+        ndiv = ndiv / p
+        sum = sum * p + lastsum
+      }
+    }
+    if (ndiv > 1) sum *= (ndiv + 1)
+    sum
+  }
+  
+  def sumpropdiv(n:Long) = sumdiv(n) - n
+
   def primeFactors(n: Long): List[Long] =
     factorCache.getOrElse(n, {
       factorCache(n) =
         if (n == 1) List()
-        else Prime.stream().find(n % _ == 0) match {
+        else primes.find(n % _ == 0) match {
           case Some(factor) => factor :: primeFactors(n / factor)
         }
       factorCache(n)
     })
+
+  def factorproducts(n: Long): List[List[Long]] = {
+    def iter(factors: List[Long]): List[List[Long]] = {
+      if (factors.isEmpty) List(List())
+      else (for {
+        l <- (1 to factors.length).toList
+        comb <- factors.combinations(l).toList.distinct
+        subFactors <- iter(factors diff comb)
+      } yield { comb.product :: subFactors }).map(_.sorted).distinct
+    }
+
+    iter(Factor.primeFactors(n))
+  }
 
   def gcf(v1: Long, v2: Long): Long = {
     val (smaller, larger) = if (v1 < v2) (v1, v2) else (v2, v1)
@@ -55,7 +93,6 @@ object Phi {
 
   def initialisePhi(): Unit = {
     if (initialised) return
-    val primes = Prime.stream()
     for {
       i <- 2 to MAX_CACHED
       if (phiarr(i) == i)
@@ -72,8 +109,7 @@ object Phi {
     if (n <= MAX_CACHED && !initialised) {
       initialisePhi()
       phiarr(n.toInt)
-    } else (n /: Factor.primeFactors(n).distinct)
-      { (prod, p) => prod * (p - 1) / p }
+    } else (n /: Factor.primeFactors(n).distinct) { (prod, p) => prod * (p - 1) / p }
   }
 
 }
